@@ -20,6 +20,15 @@ class Reel{
         this.currentSymbols.unshift(this.getRandomSymbol());
         this.currentSymbols.pop();
     }   
+    spinStart() {
+        for(let i=0; i<10; i++)
+            this.currentSymbols.push(this.getRandomSymbol());
+        
+    }   
+    spinStop() {
+        for(let i=0; i<10; i++)
+            this.currentSymbols.shift();        
+    }   
 }
 
 class SlotMachine{
@@ -31,16 +40,19 @@ class SlotMachine{
         this.reels = [];
         this.symbols = symbols;
         this.images = {};
+        this.loadSymbols();
         this.loadImages(() => {
-          this.initReels();
-          this.addEventListeners();
-          this.resizeCanvas();
-          this.drawInitialMessage();
-          window.addEventListener('resize', this.resizeCanvas.bind(this));
+            this.initReels();
+            this.addEventListeners();
+            this.resizeCanvas();
+            this.drawInitialMessage();
+            window.addEventListener('resize', this.resizeCanvasAndImages.bind(this));
         });
       }
     //loadImages is loading the images and then running a callback function
     loadImages(callback) {
+        console.log("load IMAGES");
+        this.images = [];
         const promises = this.symbols.map(symbol => new Promise((resolve, reject) => {
           const img = new Image();
           img.src = symbol;
@@ -74,16 +86,16 @@ class SlotMachine{
         this.ctx.fillText(message, parseInt(this.canvas.style.width) / 2, parseInt(this.canvas.style.height) / 2);
     }
     //drawReels is drawing Reels on the canvas - 3 columns
-    drawReels(){
+    drawReels(spiningPercentage = 0){
         const reelWidth = parseInt(this.canvas.style.width) / 3;
         const reelHeight = parseInt(this.canvas.style.height);
         const margin = 0.05 * Math.min(reelWidth, reelHeight / 3);
         const maxSymbolWidth = reelWidth - margin * 2;
         const maxSymbolHeight = (reelHeight / 3) - margin * 2;
         
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, parseInt(this.canvas.style.width), parseInt(this.canvas.style.height));
         this.ctx.fillStyle = "white";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, parseInt(this.canvas.style.width), parseInt(this.canvas.style.height));
         for (let i = 0; i < this.reels.length; i++) {
             for (let j = 0; j < this.reels[i].currentSymbols.length; j++) {
                 const symbol = this.reels[i].currentSymbols[j];
@@ -100,7 +112,9 @@ class SlotMachine{
                 }
 
                 const x = i * reelWidth + (reelWidth - drawWidth) / 2;
-                const y = j * (reelHeight / 3) + (reelHeight / 3 - drawHeight) / 2;
+                //simulating spin
+                const y = j * (reelHeight / 3) + (reelHeight / 3 - drawHeight) / 2 - ((this.reels[i].currentSymbols.length-3) * spiningPercentage * (reelHeight / 3)); 
+                //if(spiningPercentage == 0) console.log(j," y=",y);
                 this.ctx.drawImage(img, x, y, drawWidth, drawHeight);
             }
         }
@@ -109,12 +123,12 @@ class SlotMachine{
     //imitates spin
     async spinReels(callback) {
         const spinDuration = 2000; // Total duration of the spin in milliseconds
-        const frameDuration = 100 + Math.floor(Math.random() *300); // Duration of each frame in milliseconds - 100ms + random (0-300)
+        const frameDuration = 100 ; // Duration of each frame in milliseconds - 100ms + random (0-300)
         const frames = Math.floor(spinDuration / frameDuration);
 
         for (let i = 0; i < frames; i++) {
             this.reels.forEach(reel => reel.spin());
-            this.drawReels();
+            this.drawReels(i/frames);
             await this.sleep(frameDuration);
         }
 
@@ -123,10 +137,31 @@ class SlotMachine{
             reel.currentSymbols[i] = reel.getRandomSymbol();
         }
         });
-        this.drawReels();
+        this.drawReels(0);
         this.checkWin();
         if (callback) callback();
     }
+
+    async spinReels2(callback) {
+        const spinDuration = 2000; // Total duration of the spin in milliseconds
+        const frameDuration = 50 ; // Duration of each frame in milliseconds - 100ms + random (0-300)
+        const frames = Math.floor(spinDuration / frameDuration);
+
+        this.reels.forEach(reel => reel.spinStart());
+
+        for (let i = 0; i < frames; i++) {            
+            this.drawReels(i/frames);
+            await this.sleep(frameDuration);
+        }
+
+        this.reels.forEach(reel => reel.spinStop());
+
+        this.drawReels(0);
+        this.checkWin();
+        if (callback) callback();
+    }
+
+
     //sleep is used to create a delay in the spinning
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -135,11 +170,17 @@ class SlotMachine{
     addEventListeners(){
         this.button.addEventListener('click', () => {
             this.clearWinAlert();
-            this.spinReels(() => {
+            this.spinReels2(() => {
                 console.log('Spin complete');
             });
         });
 
+    }
+    resizeCanvasAndImages(){
+        this.loadSymbols();
+        this.loadImages(() => {
+            this.resizeCanvas();
+        });
     }
     //resizeCanvas to adjust to the window size / canvas size dynamically
     resizeCanvas(){        
@@ -152,40 +193,68 @@ class SlotMachine{
         this.canvas.style.width = `${canvasSize}px`;
         this.canvas.style.height = `${canvasSize}px`;
         this.ctx.setTransform(ratio, 0, 0, ratio, 0, 0); // Reset the transform before drawing
-        this.drawInitialMessage();
+        this.drawInitialMessage();       
+        
     }
     //checkWin is launched after each spin to check if a winning combination is there in any row
     checkWin() {
+        let winSymbol;
         for (let row = 0; row < 3; row++) {
             const symbol = this.reels[0].currentSymbols[row];
+            winSymbol = symbol;
             let win = true;
             for (let reel = 1; reel < this.reels.length; reel++) {
                 if (this.reels[reel].currentSymbols[row] !== symbol) {
-                    win = false;
+                    win = false;                    
                     break;
                 }
             }
             //if there is then show a Win alert
             if (win) {
-                this.showWinAlert();
+                this.showWinAlert(winSymbol);
                 return;
             }
         }
     }
     //show win alert in the alertContainer div in above the canvas
-    showWinAlert() {
+    showWinAlert(symbol) {
         const alertContainer = document.getElementById('alertContainer');
         alertContainer.innerHTML = `
             <div class="alert alert-success" role="alert">
             WINNER!
             </div>
         `;
+        this.ctx.fillStyle = "yellow";
+        this.ctx.fillRect(parseInt(this.canvas.style.width)*0.20, parseInt(this.canvas.style.height)*0.20, parseInt(this.canvas.style.width)*0.60, parseInt(this.canvas.style.height)*0.60);        
+        const img = this.images[symbol];
+
+        this.ctx.drawImage(img, parseInt(this.canvas.style.width)*0.25, parseInt(this.canvas.style.height)*0.25, parseInt(this.canvas.style.width)*0.5, parseInt(this.canvas.style.height)*0.5);
     }
     //clear the win alert makes the alertContainer empty
     clearWinAlert() {
         const alertContainer = document.getElementById('alertContainer');
         alertContainer.innerHTML = '';    
     }    
+    updateSymbols(){
+        this.symbols = loadSymbols();
+    }
+    loadSymbols(){
+        let symbols;
+        if(document.documentElement.clientHeight >200 && document.documentElement.clientWidth > 200){
+            symbols = [
+                'img/banana.png', // Banana
+                'img/cherry.png', // Cherry
+                'img/melon.png'   // Melon
+            ];
+        } else {
+            symbols = [
+                'img/bananaXs.png', // Banana
+                'img/cherryXs.png', // Cherry
+                'img/melonXs.png'   // Melon
+            ];
+        }
+        this.symbols = symbols;
+    }
 }
 
 
@@ -194,10 +263,7 @@ let slotMachine;
 
 //when the DOM is loaded then initiate the SlotMachine
 document.addEventListener('DOMContentLoaded', () => {
-    const symbols = [
-    'img/banana.png', // Banana
-    'img/cherry.png', // Cherry
-    'img/melon.png'   // Melon
-    ];
-    slotMachine = new SlotMachine('slotMachineCanvas', 'spinButton', symbols);
+    
+    slotMachine = new SlotMachine('slotMachineCanvas', 'spinButton');
 });
+
