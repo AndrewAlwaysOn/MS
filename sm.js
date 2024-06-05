@@ -11,6 +11,10 @@ class Reel{
             this.currentSymbols.push(this.getRandomSymbol());
         }
     }
+    //Init Reel get's random 3 symbols
+    clearReel() {
+        this.currentSymbols = [];        
+    }
     //getRandomSymbol generates a random symbol
     getRandomSymbol() {
         return this.symbols[Math.floor(Math.random() * this.symbols.length)];
@@ -50,7 +54,8 @@ class SlotMachine{
         });
       }
     //loadImages is loading the images and then running a callback function
-    loadImages(callback) {        
+    loadImages(callback) {
+        console.log("load IMAGES");
         this.images = [];
         const promises = this.symbols.map(symbol => new Promise((resolve, reject) => {
           const img = new Image();
@@ -78,8 +83,10 @@ class SlotMachine{
         this.ctx.clearRect(0, 0, parseInt(this.canvas.style.width), parseInt(this.canvas.style.height));
         this.ctx.fillStyle = "white";
         this.ctx.fillRect(0, 0, parseInt(this.canvas.style.width), parseInt(this.canvas.style.height));
-        this.ctx.fillStyle = "black";
+        this.ctx.fillStyle = "black";        
         this.ctx.font = "30px Arial";
+        if(parseInt(this.canvas.style.width)<300) this.ctx.font = "15px Arial";
+        if(parseInt(this.canvas.style.width)<200) this.ctx.font = "10px Arial";
         this.ctx.textAlign = "center";
         this.ctx.textBaseline = "middle";
         this.ctx.fillText(message, parseInt(this.canvas.style.width) / 2, parseInt(this.canvas.style.height) / 2);
@@ -179,7 +186,12 @@ class SlotMachine{
         this.loadSymbols();
         this.loadImages(() => {
             this.resizeCanvas();
-        });
+        });        
+        for (let reel = 0; reel < this.reels.length; reel++) {
+            this.reels[reel].symbols = this.symbols;
+            this.reels[reel].clearReel();
+            this.reels[reel].initReel();
+        }
     }
     //resizeCanvas to adjust to the window size / canvas size dynamically
     resizeCanvas(){        
