@@ -73,17 +73,19 @@ class SlotMachine{
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2);
   }
-
+  //drawReels is simply drawing them on the canvas
   drawReels(){
 
   }
+  //imitates spin
   spin(){
 
   }
-
+  //addEventListeners for interactivity and flow
   addEventListeners(){
 
   }
+  //resizeCanvas to adjust to the window size
   resizeCanvas(){
 
   }
