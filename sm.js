@@ -50,8 +50,7 @@ class SlotMachine{
         });
       }
     //loadImages is loading the images and then running a callback function
-    loadImages(callback) {
-        console.log("load IMAGES");
+    loadImages(callback) {        
         this.images = [];
         const promises = this.symbols.map(symbol => new Promise((resolve, reject) => {
           const img = new Image();
