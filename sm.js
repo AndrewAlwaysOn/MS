@@ -1,5 +1,5 @@
 class Reel{
-    //Reels constructor, symbol is the graphic displayed.
+    //Reels constructor, symbol is the graphic displayed. A Reel is a column of 3 symbols
     constructor(symbols) {
         this.symbols = symbols;
         this.currentSymbols = [];
@@ -23,5 +23,36 @@ class Reel{
 }
 
 class SlotMachine{
-
+    //Slot Machine constructor initilizes the stage
+    constructor(canvasId, buttonId, symbols) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.button = document.getElementById(buttonId);
+        this.reels = [];
+        this.symbols = symbols;
+        this.images = {};
+        this.loadImages(() => {
+          this.initReels();
+          this.addEventListeners();
+          this.resizeCanvas();
+          this.drawInitialMessage();
+          window.addEventListener('resize', this.resizeCanvas.bind(this));
+        });
+      }
+    //loadImages is loading the images and then running a callback function
+    loadImages(callback) {
+        const promises = this.symbols.map(symbol => new Promise((resolve, reject) => {
+          const img = new Image();
+          img.src = symbol;
+          img.onload = () => {
+            this.images[symbol] = img;
+            resolve();
+          };
+          img.onerror = reject;
+        }));
+    
+        Promise.all(promises).then(callback).catch(error => {
+          console.error('Error loading images:', error);
+        });
+    }  
 }
