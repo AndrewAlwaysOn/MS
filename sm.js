@@ -1,0 +1,7 @@
+class Reel{
+
+}
+
+class SlotMachine{
+
+}
