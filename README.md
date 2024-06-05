@@ -1,6 +1,6 @@
 # Slot Machine homework
  Welcome to the Game!
- It's built with HTML5, using Bootstrap and java script.
+ It's built with HTML5, using Bootstrap and pure Java Script.
 
  I tried my best on object oriented Java Script.
  Also tried to have a balance with quality of this production!
