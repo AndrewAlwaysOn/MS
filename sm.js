@@ -55,4 +55,36 @@ class SlotMachine{
           console.error('Error loading images:', error);
         });
     }  
+  //initReels is adding 3 Reels, 3 columns to the Slot Machine  
+  initReels() {
+    for (let i = 0; i < 3; i++) {
+      this.reels.push(new Reel(this.symbols));
+    }
+  }
+  //upon start there will be a start message displayed on the canvas / slotMachine
+  drawInitialMessage() {
+    const message = "Press spin to play";
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = "black";
+    this.ctx.font = "30px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2);
+  }
+
+  drawReels(){
+
+  }
+  spin(){
+
+  }
+
+  addEventListeners(){
+
+  }
+  resizeCanvas(){
+
+  }
 }
